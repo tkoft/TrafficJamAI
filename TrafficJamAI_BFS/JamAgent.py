@@ -1,5 +1,5 @@
 """This module includes the JamAgent class, which represents an AI search agent to 
-solve the traffic jam puzzle.  Assumes valid puzzle with solution.
+solve the traffic jam puzzle.
 
 It also includes a BfsNode class as a data structure for the AI's BFS search, and
 a Move class to represent a single move on a puzzle.
@@ -9,8 +9,6 @@ a Move class to represent a single move on a puzzle.
 from JamPuzzle import *
 from collections import deque
 import copy
-import heapq
-import queue
 
 class JamAgent:
 	"""Represents AI search agent that will solve a traffic jam puzzle
@@ -18,7 +16,6 @@ class JamAgent:
 	bfs(self, puzzle):  runs BFS search on a given JamPuzzle
 	"""
 	def __init__(self):
-		# Count for performance evaluation; incremented every time goal tested (won() called)
 		self.nodesVisited = 0
 
 	def bfs(self, puzzle):
@@ -30,44 +27,35 @@ class JamAgent:
 		Return:  
 			Moves[]: list of Move objects representing solution to puzzle
 		"""
-
 		# Queue to hold untraversed nodes
-		bfsQueue = queue.PriorityQueue(0)
+		bfsQueue = deque([])
+		self.nodesVisited = 0
 
 		# The current node/state
 		current = BfsNode(puzzle, [])
-
-		# Reset goal test counter
-		self.nodesVisited = 0
 		
 		# Track seen puzzle states in a hashtable to prevent loops in BFS
-		# Hash from str(JamPuzzle.getGrid()) --> ref to node (in the queue o) where it already exists
+		# Hash from str(JamPuzzle.getGrid()) --> True if seen before, None if not
 		seenPuzzleStates = {}
-		seenPuzzleStates[str(current.puzzle.getGrid())] = current;
+		seenPuzzleStates[str(current.puzzle.getGrid())] = True;
 
-		# Goal test and count
 		while not current.puzzle.won():
 			self.nodesVisited += 1
-
-			# Look at every possible move from current state
+			
 			for m in current.getPossibleMoves():
 
-				# Duplicate node, perform a move on puzzle, add move to movesSoFar
+				# Duplicate puzzle state and perform a move
 				newState = copy.deepcopy(current)
 				newState.puzzle.move(m.pos, m.moves)
-				newState.movesSoFar += [m]
-				
-				# If new state is unseen or has fewer moves than when previously seen, add to queue and update seen states list
-				if not str(newState.puzzle) in seenPuzzleStates: 
-					bfsQueue.put(newState)
-					seenPuzzleStates[str(newState.puzzle)] = newState
-				elif len(newState.movesSoFar) < len(seenPuzzleStates[str(newState.puzzle)].movesSoFar):
-					seenPuzzleStates[str(newState.puzzle)].movesSoFar = newState.movesSoFar
 
-			# Get next best move from priority queue
-			current = bfsQueue.get();
+				# If new state is unseen, add to queue and seen states list
+				if ((not str(newState.puzzle) in seenPuzzleStates) or seenPuzzleStates[str(newState.puzzle)] > len(newState.movesSoFar)):
+					bfsQueue.append(BfsNode(newState.puzzle, current.movesSoFar + [m]))
+					seenPuzzleStates[str(newState.puzzle)] = True;
+			current = bfsQueue.popleft()
 
 		return current.movesSoFar
+
 
 class BfsNode:
 	"""Represents a single state of the BFS
@@ -105,33 +93,6 @@ class BfsNode:
 				if not i == 0:
 						results += [Move(v.pos, i)]
 		return results
-
-	def numBlocked(self):
-		"""Heuristic function: count number of vehicles between door and solution vehicle.  
-		Blocking vehicles must be horizontal, and assumes there is a solution vehicle.
-		"""
-		# Number of blocking vehicles so far
-		count = 0
-		# y-coordinate to check
-		y = 0
-		# Get vehicle at current coordinate (could be none)
-		currentVeh = self.puzzle.getVehicleAt((self.puzzle.doorPos, y))
-		# Check until vertical vehicle found; also allow None vehicle found to prevent exception
-		while (currentVeh == None or currentVeh.orientation == Orientations.horizontal):
-			if not currentVeh == None:
-				count += 1
-			y += 1
-			currentVeh = self.puzzle.getVehicleAt((self.puzzle.doorPos, y))
-		return count
-
-	def heuristic(self):
-		# Not actually the heuristic, but the entire A* evaluation function.
-		# f(n) = g(n) + h(n); moves so far plus heuristic
-		return len(self.movesSoFar)+self.numBlocked()
-
-	def __lt__(self, b):
-		# Needed for the pirority queue to order nodes by f(n)
-		return (self.heuristic()) < (b.heuristic())
 
 
 class Move:

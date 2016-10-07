@@ -54,11 +54,10 @@ def printSolution(puzzle, solution):
 	"""
 	for m in solution:
 		print(puzzle)
-		puzzle.move(m.pos, m.moves)
 		print(m)
+		puzzle.move(m.pos, m.moves)
 	print(puzzle)
 	print("Puzzle completed in " + str(len(solution)) + " moves.")
-	print("Number of nodes visited in search:  " + str(agent.nodesVisited))	
 
 
 # Create AI agent and run on specified puzzles
@@ -66,13 +65,16 @@ agent = JamAgent()
 
 solution = agent.bfs(trafficJamA)
 printSolution(trafficJamA, solution)
+print("Number of nodes visited in search:  " + str(agent.nodesVisited))
 
 print("****************************************")
 
 solution = agent.bfs(trafficJamB)
 printSolution(trafficJamB, solution)
+print("Number of nodes visited in search:  " + str(agent.nodesVisited))
 
 print("****************************************")
 
 solution = agent.bfs(trafficJamC)
 printSolution(trafficJamC, solution)
+print("Number of nodes visited in search:  " + str(agent.nodesVisited))

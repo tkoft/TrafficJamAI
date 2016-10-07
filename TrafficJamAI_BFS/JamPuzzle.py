@@ -1,6 +1,6 @@
 """This module includes the JamPuzzle class, which represents an instance of the Traffic
 Jam Puzzle.  It supports all moves, legal or not, and will track the state of the puzzle
-for any moves made. It thus assumed the input puzzle is a valid puzzle with a solution.
+for any moves made.
 
 It also includes the Vehicle class, which represents a single vehicle with a position,
 orientation, and vehicle type.
@@ -137,7 +137,12 @@ class JamPuzzle:
 			newPosList[veh.orientation]+=j
 			newPosTuple = tuple(newPosList)
 
-			if (not self.getVehicleAt(newPosTuple) == None):
+			blocked = False
+			for v in self.vehicles:
+				if newPosTuple in v.coveredUnits():
+					blocked = True
+					break
+			if blocked:
 				break
 			else:
 				maxMove = j - veh.vType + 1
@@ -148,13 +153,13 @@ class JamPuzzle:
 	def getVehicleAt(self, pos):
 		"""Retrieves vehicle at given position in puzzle
 		Args:
-			pos ((int, int)):  position of vehicle to find
+			pos ((int, int)):  position of upper-left part of vehicle to find
 		Return:
 			v (Vehicle):  the found vehicle, if it exists
 			None:  if no vehicle was found at the position
 		"""
 		for v in self.vehicles:
-			if pos in v.coveredUnits():
+			if v.pos == pos:
 				return v
 		return None
 
@@ -169,8 +174,6 @@ class JamPuzzle:
 		if not v == None and v.orientation == Orientations.vertical:
 			return True
 		return False
-
-
 
 	def __str__(self):
 		result = "  " * self.doorPos + "* " + "  " * (self.gridSizeX - self.doorPos - 1) + "\n"
